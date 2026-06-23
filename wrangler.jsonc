@@ -1,0 +1,10 @@
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "dvtv-sdk-examples",
+	"compatibility_date": "2025-07-01",
+	"compatibility_flags": ["nodejs_compat"],
+	"pages_build_output_dir": "./build",
+	"observability": {
+		"enabled": true
+	}
+}

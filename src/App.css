@@ -1,0 +1,162 @@
+.app {
+    display: grid;
+    grid-template-columns: 240px 1fr;
+    min-height: 100vh;
+}
+
+.app-sidebar {
+    background: #1a1a1a;
+    color: #fff;
+    padding: 1.25rem;
+}
+
+.app-sidebar h1 {
+    margin: 0 0 0.25rem;
+    font-size: 1.1rem;
+}
+
+.app-sidebar p {
+    margin: 0 0 1rem;
+    font-size: 0.8rem;
+    color: #aaa;
+}
+
+.app-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.app-nav button {
+    text-align: left;
+    border: none;
+    background: transparent;
+    color: #ddd;
+    padding: 0.5rem 0.65rem;
+    border-radius: 6px;
+}
+
+.app-nav button:hover {
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.app-nav button.active {
+    background: #fff;
+    color: #111;
+    font-weight: 600;
+}
+
+.app-main {
+    padding: 1.5rem 2rem;
+    max-width: 960px;
+}
+
+.example {
+    background: #fff;
+    border-radius: 8px;
+    padding: 1.25rem 1.5rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.example h2 {
+    margin-top: 0;
+}
+
+.example pre {
+    overflow: auto;
+    background: #f8f8f8;
+    padding: 0.75rem;
+    border-radius: 6px;
+    font-size: 0.8rem;
+}
+
+.example-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin: 0.75rem 0;
+}
+
+.example-actions input {
+    flex: 1;
+    min-width: 200px;
+    padding: 0.45rem 0.6rem;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+}
+
+.example-actions button {
+    padding: 0.45rem 0.85rem;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    background: #fff;
+}
+
+.example-actions button.primary {
+    background: #111;
+    color: #fff;
+    border-color: #111;
+}
+
+.example-error {
+    color: #b00020;
+}
+
+.example-muted {
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.article-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-top: 1rem;
+}
+
+.article-card {
+    display: flex;
+    gap: 1rem;
+    padding: 0.75rem;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.article-card:hover {
+    border-color: #999;
+}
+
+.article-card img {
+    width: 120px;
+    height: 68px;
+    object-fit: cover;
+    border-radius: 4px;
+    background: #eee;
+}
+
+.article-card h3 {
+    margin: 0 0 0.25rem;
+    font-size: 1rem;
+}
+
+.article-card p {
+    margin: 0;
+    font-size: 0.85rem;
+    color: #555;
+}
+
+@media (max-width: 720px) {
+    .app {
+        grid-template-columns: 1fr;
+    }
+
+    .app-sidebar {
+        padding-bottom: 0.75rem;
+    }
+
+    .app-nav {
+        flex-direction: row;
+        flex-wrap: wrap;
+    }
+}
