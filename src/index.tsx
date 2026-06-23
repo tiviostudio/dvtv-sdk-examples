@@ -5,22 +5,34 @@ import { createRoot } from 'react-dom/client'
 import type { ReactNode } from 'react'
 
 import App from './App'
-import { getSecretApplicationIdHint, getTivioApplicationId, getTivioSecret } from './config'
+import { getTivioApplicationId, getTivioSecret } from './config'
 import './index.css'
 
 import type { Config } from '@tivio/sdk-react'
 
 const secret = getTivioSecret()
-const applicationId = getTivioApplicationId(secret)
+const applicationId = getTivioApplicationId()
 
-const tivioConf: Config = {
-    secret,
-    ...(applicationId ? { applicationId } : {}),
-    verbose: true,
-    deviceCapabilities: [],
-    currency: 'CZK',
-    language: LangCode.CS,
-    cmp: 'none',
+function MissingConfig() {
+    return (
+        <div style={{ padding: 24, maxWidth: 560 }}>
+            <h1>Configuration required</h1>
+            <p>
+                Copy <code>.env.example</code> to <code>.env</code> and set:
+            </p>
+            <ul>
+                <li>
+                    <code>VITE_TIVIO_SECRET</code> — web SDK secret from Tivio
+                </li>
+                <li>
+                    <code>VITE_TIVIO_APPLICATION_ID</code> — application id for the same organization
+                </li>
+            </ul>
+            <p style={{ marginTop: 16 }}>
+                Both values must belong to the same organization. Tivio will provide them separately.
+            </p>
+        </div>
+    )
 }
 
 function SdkReadyGate({ children }: { children: ReactNode }) {
@@ -38,13 +50,14 @@ function SdkReadyGate({ children }: { children: ReactNode }) {
         const isApplicationNotFound = bundle.error?.includes('Application not found')
 
         return (
-            <div style={{ padding: 24 }}>
+            <div style={{ padding: 24, maxWidth: 560 }}>
                 <h1>SDK failed to load</h1>
                 <p style={{ color: 'crimson' }}>{bundle.error}</p>
                 {isApplicationNotFound && (
                     <p style={{ marginTop: 16 }}>
-                        Secret <code>{secret}</code> and <code>applicationId</code> must belong to the same
-                        organization. {getSecretApplicationIdHint(secret)}
+                        Check that <code>VITE_TIVIO_SECRET</code> and{' '}
+                        <code>VITE_TIVIO_APPLICATION_ID</code> in <code>.env</code> belong to the same
+                        organization.
                     </p>
                 )}
             </div>
@@ -57,10 +70,24 @@ function SdkReadyGate({ children }: { children: ReactNode }) {
 const container = document.getElementById('root')
 const root = createRoot(container!)
 
-root.render(
-    <TivioProvider conf={tivioConf}>
-        <SdkReadyGate>
-            <App />
-        </SdkReadyGate>
-    </TivioProvider>,
-)
+if (!secret || !applicationId) {
+    root.render(<MissingConfig />)
+} else {
+    const tivioConf: Config = {
+        secret,
+        applicationId,
+        verbose: true,
+        deviceCapabilities: [],
+        currency: 'CZK',
+        language: LangCode.CS,
+        cmp: 'none',
+    }
+
+    root.render(
+        <TivioProvider conf={tivioConf}>
+            <SdkReadyGate>
+                <App />
+            </SdkReadyGate>
+        </TivioProvider>,
+    )
+}

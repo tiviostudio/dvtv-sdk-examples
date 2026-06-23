@@ -35,11 +35,11 @@ Alternative: Cursor menu **File → New Window**, then **File → Open Folder…
 cd /Users/davidrus/Sites/tivio/dvtv-sdk-examples
 yarn install
 cp .env.example .env
-# set VITE_TIVIO_SECRET in .env
+# set VITE_TIVIO_SECRET and VITE_TIVIO_APPLICATION_ID in .env (from Tivio)
 yarn start
 ```
 
-Secret can also be passed via URL: `?secret=<tivioClientSecret>`.
+Credentials come from `.env` only — never commit them.
 
 ## Project layout
 
@@ -63,7 +63,7 @@ Stack: Vite 6, React 18, `@tivio/sdk-react` from npm.
 
 ## SDK conventions (DVTV)
 
-- **Default secret:** `7oraqYzNbV2g4tji` + `UIwGV0qOZgbj0WctI5CR` (DVTV-DEV, bundle 7.10.0). Demo/legacy secrets need i18next patch; never `0tA91lLNyZbSu1dbCIlF` on web.
+- Credentials: `VITE_TIVIO_SECRET` + `VITE_TIVIO_APPLICATION_ID` in `.env` (same organization).
 - Import types/enums from `@tivio/sdk-react` (not `@tivio/types` — not on public npm).
 - `useTivioApi()` for `tivio.getArticleByIdOrUrlName`, series APIs, etc.
 - `bundle.auth?.signIn…` — auth may be null until bundle is ready.

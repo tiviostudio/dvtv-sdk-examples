@@ -1,6 +1,8 @@
 /**
- * DVTV-specific IDs and defaults.
- * Update these values from Tivio administration (Studio).
+ * DVTV-specific IDs for examples.
+ * Update screen/row/tag/article ids to match your Tivio Studio setup.
+ *
+ * SDK credentials (secret, applicationId) belong in `.env` — see `.env.example`.
  */
 export const dvtvConfig = {
     /**
@@ -20,83 +22,18 @@ export const dvtvConfig = {
      * Preferred when all magazine articles share one tag in Studio.
      */
     articlesTagId: '',
-    /** Example article id from dvtv.cz/dvtv/articles/{id} */
-    sampleArticleId: 'DEmafybcqCsduuJMyPyy',
+    /** Example article id — replace with a real article id from your application. */
+    sampleArticleId: '',
     /** Example monetization id for subscription purchase / cancel examples */
     sampleMonetizationId: '',
 } as const
 
-/**
- * DVTV bundle secrets in Firebase Remote Config (`bconf_<secret>`).
- *
- * @tivio/sdk-react downloads a remote JS bundle based on secret. The secret MUST point
- * to a **core-react-dom** (web) bundle — not core-react-native (tvOS/mobile).
- *
- * Each secret belongs to one organization — `applicationId` must exist under that org.
- */
-export const dvtvSdkSecrets = {
-    /**
-     * DVTV-DEV predproduction — NGS external web SDK.
-     * Bundle: core-react-dom_7.10.0.js (recommended default for this repo).
-     */
-    devWeb: '7oraqYzNbV2g4tji',
-    /** DVTV demo web — web-dvtv.web.app */
-    demoWeb: 'dvtvomEgYekvgICtWS9h',
-
-    legacyWeb: 'a38kdDJoel2kEKHjli38K',
-    /**
-     * DVTV Stargaze production — tvOS/native ONLY.
-     * Do NOT use with @tivio/sdk-react on web (loads core-react-native → async-storage error).
-     */
-    productionTvOs: '0tA91lLNyZbSu1dbCIlF',
-} as const
-
-/** applicationId per secret — must match the organization that owns the secret. */
-const applicationIdBySecret: Record<string, string> = {
-    [dvtvSdkSecrets.devWeb]: 'UIwGV0qOZgbj0WctI5CR',
-    [dvtvSdkSecrets.demoWeb]: 'hzHlMaAcABw771DO9XeF',
-    [dvtvSdkSecrets.legacyWeb]: 'hzHlMaAcABw771DO9XeF',
-    [dvtvSdkSecrets.productionTvOs]: '4ZOwgrri2H43k9Wl0ONB',
+export function getTivioSecret(): string | undefined {
+    const value = import.meta.env.VITE_TIVIO_SECRET
+    return typeof value === 'string' && value.length > 0 ? value : undefined
 }
 
-/** Default: DVTV-DEV predproduction (core-react-dom 7.10.0). Override via .env or ?secret= in URL. */
-const DEFAULT_TIVIO_SECRET = dvtvSdkSecrets.legacyWeb
-
-export function getTivioSecret(): string {
-    const fromQuery = new URLSearchParams(window.location.search).get('secret')
-    if (fromQuery) {
-        return fromQuery
-    }
-
-    const fromEnv = import.meta.env.VITE_TIVIO_SECRET
-    if (typeof fromEnv === 'string' && fromEnv.length > 0) {
-        return fromEnv
-    }
-
-    return DEFAULT_TIVIO_SECRET
-}
-
-/**
- * Resolves applicationId for the given secret.
- * Override with VITE_TIVIO_APPLICATION_ID when using dev/custom secrets (e.g. devWeb).
- */
-export function getTivioApplicationId(secret: string): string | undefined {
-    const fromEnv = import.meta.env.VITE_TIVIO_APPLICATION_ID
-    if (typeof fromEnv === 'string' && fromEnv.length > 0) {
-        return fromEnv
-    }
-
-    return applicationIdBySecret[secret]
-}
-
-export function getSecretApplicationIdHint(secret: string): string | undefined {
-    if (secret in applicationIdBySecret) {
-        return applicationIdBySecret[secret]
-    }
-
-    if (secret === dvtvSdkSecrets.devWeb) {
-        return applicationIdBySecret[dvtvSdkSecrets.devWeb]
-    }
-
-    return 'Set VITE_TIVIO_APPLICATION_ID in .env to match your secret\'s organization'
+export function getTivioApplicationId(): string | undefined {
+    const value = import.meta.env.VITE_TIVIO_APPLICATION_ID
+    return typeof value === 'string' && value.length > 0 ? value : undefined
 }
