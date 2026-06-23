@@ -1,8 +1,10 @@
 import react from '@vitejs/plugin-react-swc'
 import { defineConfig } from 'vite'
 
+import { patchSdkReactSharedDeps } from './vite-plugin-patch-sdk-react'
+
 export default defineConfig({
-    plugins: [react()],
+    plugins: [patchSdkReactSharedDeps(), react()],
     build: {
         outDir: 'build',
         commonjsOptions: {
@@ -11,6 +13,11 @@ export default defineConfig({
         },
     },
     optimizeDeps: {
-        include: ['@tivio/sdk-react'],
+        include: [
+            '@tivio/sdk-react',
+            'i18next',
+            'react-i18next',
+            'react-spring',
+        ],
     },
 })

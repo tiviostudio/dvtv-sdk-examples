@@ -9,6 +9,13 @@ type SeriesItem = {
     logo?: string
 }
 
+type ApplicationTile = {
+    organizationId: string
+    urlHandle: string
+    name: string
+    logo?: string
+}
+
 export function SeriesListExample() {
     const tivio = useTivioApi()
     const [series, setSeries] = useState<SeriesItem[]>([])
@@ -24,16 +31,17 @@ export function SeriesListExample() {
             }
 
             const orgIds = await tivio.getOrganizationIdsInTivioPro()
-            const allSeries = await tivio.getTivioProApplicationsByOrganizationIds(orgIds)
+            const applicationsMap = await tivio.getTivioProApplicationsByOrganizationIds(orgIds)
+            const allSeries = Array.from(applicationsMap.values()) as ApplicationTile[]
 
             const handles = tivio.organization?.allowedApplicationHandles ?? []
-            const dvtvSeries = allSeries.filter((item: { urlHandle: string }) =>
+            const dvtvSeries = allSeries.filter((item) =>
                 handles.includes(item.urlHandle)
                 && item.urlHandle !== 'dvtv'
                 && item.urlHandle !== '_default',
             )
 
-            setSeries(dvtvSeries.map((item: { organizationId: string; urlHandle: string; name: string; logo?: string }) => ({
+            setSeries(dvtvSeries.map((item) => ({
                 organizationId: item.organizationId,
                 urlHandle: item.urlHandle,
                 name: item.name,
@@ -65,6 +73,7 @@ export function SeriesListExample() {
             {loading && <p>Loading…</p>}
             {error && <p className="example-error">{error}</p>}
 
+            <p className="example-muted">{series.length} series</p>
             <pre>{JSON.stringify(series.slice(0, 10), null, 2)}</pre>
             {series.length > 10 && (
                 <p className="example-muted">Showing first 10 of {series.length} series.</p>

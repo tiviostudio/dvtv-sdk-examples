@@ -8,24 +8,47 @@ Each example is a small, runnable React component demonstrating one SDK feature.
 
 ```sh
 yarn install
-cp .env.example .env
-# fill VITE_TIVIO_SECRET in .env
 yarn start
 ```
 
 Open [http://localhost:5173](http://localhost:5173) and pick an example from the sidebar.
 
-Alternatively, pass the secret via URL (useful for Cloudflare Pages demos):
+The default is **DVTV-DEV predproduction** (`7oraqYzNbV2g4tji` → `core-react-dom_7.10.0.js`). Override via `.env` or URL:
 
 ```
-http://localhost:5173/?secret=<tivioClientSecret>
+http://localhost:5173/?secret=7oraqYzNbV2g4tji
 ```
+
+### Which secret to use?
+
+`@tivio/sdk-react` loads a remote JS bundle from Firebase Remote Config. The secret must point to a **web** bundle (`core-react-dom`), not a native one.
+
+| Secret | Use with sdk-react on web? | Notes |
+|--------|---------------------------|-------|
+| `7oraqYzNbV2g4tji` | Yes (**default**) | DVTV-DEV predproduction — `core-react-dom_7.10.0` |
+| `dvtvomEgYekvgICtWS9h` | Yes | DVTV demo web (older 5.x bundle) |
+| `pdvtvM4PCofoVav0AHGe` | Yes | Legacy DVTV web (deprecated) |
+| `0tA91lLNyZbSu1dbCIlF` | **No** | tvOS/native bundle — causes `@react-native-async-storage/async-storage` error on web |
+
+Each secret belongs to one organization. **`applicationId` must exist in that same org** — known pairs are resolved automatically in `getTivioApplicationId()`.
+
+Older remote bundles (`core-react-dom` 5.x) also require shared deps that `@tivio/sdk-react` 10.x no longer ships (`i18next`, `react-spring`, …). This repo registers them via `src/tivioSharedExtras.ts` and patches `resolveShared` in a `postinstall` script — not needed for the default 7.10.0 bundle, but kept for demo/legacy secrets.
+
+| Secret | applicationId (auto) |
+|--------|---------------------|
+| `7oraqYzNbV2g4tji` | `UIwGV0qOZgbj0WctI5CR` |
+| `dvtvomEgYekvgICtWS9h` | `hzHlMaAcABw771DO9XeF` |
+| `pdvtvM4PCofoVav0AHGe` | `hzHlMaAcABw771DO9XeF` |
+
+dvtv.cz uses `0tA91lLNyZbSu1dbCIlF` for Firebase auth, but bundles `core-react-dom` directly (not via sdk-react). For a third-party web integration, ask Tivio for a web SDK secret or use `bundleUrlOverride` during development.
+
+See [`src/config.ts`](src/config.ts) for `applicationId` and other DVTV ids.
 
 ## Examples
 
 | Example | SDK APIs |
 |---------|----------|
-| Login | `useUser`, `bundle.auth.signInWithEmailAndPassword`, `signOut` |
+| Login & registration | `useUser`, `bundle.auth.signInWithEmailAndPassword`, `createUserWithEmailAndPassword`, `signOut` |
 | Series | `bundle.tivio.getOrganizationIdsInTivioPro`, `getTivioProApplicationsByOrganizationIds` |
 | Articles (Časopisy) | `useRowsInScreen`, `useItemsInRow` |
 | Article detail | `bundle.tivio.getArticleByIdOrUrlName` |

@@ -1,11 +1,13 @@
-import { useTivioReadyData } from '@tivio/sdk-react'
+import { useTivioData } from '@tivio/sdk-react'
 
 /**
  * Returns the core `tivio` instance from the loaded remote bundle.
- * The instance is available once `useTivioReadyData()` is non-null.
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function useTivioApi(): any {
-    const bundle = useTivioReadyData() as { tivio?: unknown } | null
-    return bundle?.tivio ?? null
+    const bundle = useTivioData()
+    if (bundle.state !== 'ready') {
+        return null
+    }
+    return (bundle as { tivio?: unknown }).tivio ?? null
 }

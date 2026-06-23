@@ -1,18 +1,40 @@
 import { useOrganizationSubscriptions, usePurchaseSubscription, PurchaseStatus } from '@tivio/sdk-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 import { dvtvConfig } from '../config'
 
-export function SubscriptionsExample() {
-    const { subscriptions } = useOrganizationSubscriptions()
-    const [selectedId, setSelectedId] = useState(dvtvConfig.sampleMonetizationId || subscriptions[0]?.id || '')
-
+function SubscriptionPurchasePanel({ monetizationId }: { monetizationId: string }) {
     const {
         paymentInfo,
         paymentStatus,
         paymentError,
         isLoading,
-    } = usePurchaseSubscription(selectedId)
+    } = usePurchaseSubscription(monetizationId)
+
+    return (
+        <>
+            <p>Payment status: {paymentStatus ?? '—'}</p>
+            {isLoading && <p>Loading payment info…</p>}
+            {paymentError && <p className="example-error">{paymentError}</p>}
+            {paymentInfo && (
+                <pre>{JSON.stringify(paymentInfo, null, 2)}</pre>
+            )}
+            {paymentStatus === PurchaseStatus.PAID && (
+                <p>Subscription active.</p>
+            )}
+        </>
+    )
+}
+
+export function SubscriptionsExample() {
+    const { subscriptions } = useOrganizationSubscriptions()
+    const [selectedId, setSelectedId] = useState('')
+
+    useEffect(() => {
+        if (!selectedId && subscriptions.length > 0) {
+            setSelectedId(dvtvConfig.sampleMonetizationId || subscriptions[0].id)
+        }
+    }, [subscriptions, selectedId])
 
     return (
         <div className="example">
@@ -34,22 +56,10 @@ export function SubscriptionsExample() {
                 </select>
             </div>
 
-            {selectedId && (
-                <>
-                    <p>Payment status: {paymentStatus ?? '—'}</p>
-                    {isLoading && <p>Loading payment info…</p>}
-                    {paymentError && <p className="example-error">{paymentError}</p>}
-                    {paymentInfo && (
-                        <pre>{JSON.stringify(paymentInfo, null, 2)}</pre>
-                    )}
-                    {paymentStatus === PurchaseStatus.PAID && (
-                        <p>Subscription active — use Qerko payment flow in your app UI.</p>
-                    )}
-                </>
-            )}
+            {selectedId && <SubscriptionPurchasePanel monetizationId={selectedId} />}
 
             {subscriptions.length === 0 && (
-                <p className="example-muted">No subscriptions returned. Is SDK initialized?</p>
+                <p className="example-muted">No subscriptions returned yet.</p>
             )}
         </div>
     )

@@ -16,7 +16,7 @@ export type ExampleId =
     | 'cancel-subscription'
 
 export const exampleDefinitions: { id: ExampleId; label: string }[] = [
-    { id: 'login', label: 'Login' },
+    { id: 'login', label: 'Login & registration' },
     { id: 'series', label: 'Series' },
     { id: 'articles', label: 'Articles (Časopisy)' },
     { id: 'article-detail', label: 'Article detail' },

@@ -63,10 +63,14 @@ Stack: Vite 6, React 18, `@tivio/sdk-react` from npm.
 
 ## SDK conventions (DVTV)
 
+- **Default secret:** `7oraqYzNbV2g4tji` + `UIwGV0qOZgbj0WctI5CR` (DVTV-DEV, bundle 7.10.0). Demo/legacy secrets need i18next patch; never `0tA91lLNyZbSu1dbCIlF` on web.
 - Import types/enums from `@tivio/sdk-react` (not `@tivio/types` — not on public npm).
 - `useTivioApi()` for `tivio.getArticleByIdOrUrlName`, series APIs, etc.
 - `bundle.auth?.signIn…` — auth may be null until bundle is ready.
-- Articles (Časopisy): `useRowsInScreen('casopisy')` + `useItemsInRow`.
+- Articles detail: `useTivioApi().getArticleByIdOrUrlName(id)`.
+- Articles list: NOT from embed screen `screen-spKopMMkpKnp8h_UrzRxu` (PDF iframe). Use either
+  `articlesTagId` → `getArticlesByTagId`, or `articlesScreenId` + filter row → `useRowsInScreen` +
+  `useItemsInRow`.
 - Vouchers: `useVoucher` → `activate()`.
 - Cancel subscription: `useCancelSubscription(monetizationId)` — stops renewal, access until `expirationDate`.
 
