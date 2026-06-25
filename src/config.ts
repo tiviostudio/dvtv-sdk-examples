@@ -14,9 +14,9 @@ export const dvtvConfig = {
      * Tivio Articles list — option A: normal screen with a filter row (type ARTICLE).
      * Must NOT be an EMBED screen. Leave empty when using articlesTagId.
      */
-    articlesScreenId: '',
-    /** Row id with ARTICLE filter. When empty, the first row from useRowsInScreen is used. */
-    articlesRowId: '',
+    articlesScreenId: 'screen-On_2MkUcw9k7E4g9k2jOR',
+    /** Row id with ARTICLE filter (Studio screen Ny2JqHWVus3uULuHuMT0). */
+    articlesRowId: 'row-S3-DWDivR2mj_-EqyTXGz',
     /**
      * Tivio Articles list — option B: shared tag id for getArticlesByTagId().
      * Preferred when all magazine articles share one tag in Studio.
