@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 
 import { useTivioApi } from '../hooks/useTivioApi'
+import { resolveTranslation } from '../utils/resolveTranslation'
 
 type SeriesItem = {
     organizationId: string
@@ -12,11 +13,15 @@ type SeriesItem = {
 type ApplicationTile = {
     organizationId: string
     urlHandle: string
-    name: string
+    name: unknown
     logo?: string
 }
 
-export function SeriesListExample() {
+type Props = {
+    onSelectSeries?: (series: SeriesItem) => void
+}
+
+export function SeriesListExample({ onSelectSeries }: Props) {
     const tivio = useTivioApi()
     const [series, setSeries] = useState<SeriesItem[]>([])
     const [loading, setLoading] = useState(false)
@@ -44,7 +49,7 @@ export function SeriesListExample() {
             setSeries(dvtvSeries.map((item) => ({
                 organizationId: item.organizationId,
                 urlHandle: item.urlHandle,
-                name: item.name,
+                name: resolveTranslation(item.name as Parameters<typeof resolveTranslation>[0], item.urlHandle),
                 logo: item.logo,
             })))
         } catch (e) {
@@ -67,17 +72,33 @@ export function SeriesListExample() {
             </p>
 
             <div className="example-actions">
-                <button onClick={loadSeries} disabled={loading}>Reload</button>
+                <button type="button" onClick={loadSeries} disabled={loading}>Reload</button>
             </div>
 
             {loading && <p>Loading…</p>}
             {error && <p className="example-error">{error}</p>}
 
             <p className="example-muted">{series.length} series</p>
-            <pre>{JSON.stringify(series.slice(0, 10), null, 2)}</pre>
-            {series.length > 10 && (
-                <p className="example-muted">Showing first 10 of {series.length} series.</p>
-            )}
+            <div className="article-list">
+                {series.map((item) => (
+                    <div
+                        key={item.organizationId}
+                        className="article-card"
+                        onClick={() => onSelectSeries?.(item)}
+                        onKeyDown={(e) => e.key === 'Enter' && onSelectSeries?.(item)}
+                        role={onSelectSeries ? 'button' : undefined}
+                        tabIndex={onSelectSeries ? 0 : undefined}
+                    >
+                        {item.logo && <img src={item.logo} alt="" />}
+                        <div>
+                            <h3>{item.name}</h3>
+                            <p className="example-muted">
+                                {item.urlHandle} · org {item.organizationId}
+                            </p>
+                        </div>
+                    </div>
+                ))}
+            </div>
         </div>
     )
 }

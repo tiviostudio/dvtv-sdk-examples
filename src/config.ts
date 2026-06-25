@@ -26,6 +26,8 @@ export const dvtvConfig = {
     sampleArticleId: '',
     /** Example monetization id for subscription purchase / cancel examples */
     sampleMonetizationId: '',
+    /** TivioPro sub-organization id — optional default for series detail example */
+    sampleSeriesOrganizationId: '',
 } as const
 
 export function getTivioSecret(): string | undefined {

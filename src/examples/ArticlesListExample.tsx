@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react'
 
 import { dvtvConfig } from '../config'
 import { useTivioApi } from '../hooks/useTivioApi'
+import { resolveTranslation } from '../utils/resolveTranslation'
 
 type ArticleListItem = {
     id: string
@@ -88,10 +89,10 @@ function ArticlesByTagList({ tagId, onSelectArticle }: Props & { tagId: string }
                         return
                     }
                     setArticles(
-                        pagination.items.map((item: { id: string; name: string; description?: string; cover?: string }) => ({
+                        pagination.items.map((item: { id: string; name: unknown; description?: unknown; cover?: string }) => ({
                             id: item.id,
-                            name: item.name,
-                            description: item.description,
+                            name: resolveTranslation(item.name, item.id),
+                            description: resolveTranslation(item.description),
                             cover: item.cover,
                         })),
                     )
@@ -148,8 +149,8 @@ function ArticlesByRowList({
                 ?.filter((item) => item.itemType === ROW_ITEM_TYPES.ARTICLE)
                 .map((item) => ({
                     id: item.id,
-                    name: item.name ?? item.id,
-                    description: 'description' in item ? item.description : undefined,
+                    name: resolveTranslation(item.name, item.id),
+                    description: 'description' in item ? resolveTranslation(item.description) : undefined,
                     cover: 'cover' in item ? item.cover : undefined,
                 })) ?? [],
         [pagination?.items],

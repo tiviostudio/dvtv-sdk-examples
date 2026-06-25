@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 
 import { dvtvConfig } from '../config'
 import { useTivioApi } from '../hooks/useTivioApi'
+import { resolveTranslation } from '../utils/resolveTranslation'
 
 type Props = {
     articleId: string
@@ -33,8 +34,8 @@ export function ArticleDetailExample({ articleId, onArticleIdChange }: Props) {
 
             const response = await tivio.getArticleByIdOrUrlName(id)
             setResult({
-                name: response.article.name,
-                description: response.article.description,
+                name: resolveTranslation(response.article.name),
+                description: resolveTranslation(response.article.description),
                 isBlockedByPurchase: response.isBlockedByPurchase,
                 blocksCount: response.article.blocks?.length ?? 0,
             })

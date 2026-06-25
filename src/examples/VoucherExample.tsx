@@ -1,6 +1,8 @@
 import { useVoucher } from '@tivio/sdk-react'
 import { useState } from 'react'
 
+import { resolveTranslation } from '../utils/resolveTranslation'
+
 export function VoucherExample() {
     const [code, setCode] = useState('')
     const [submittedCode, setSubmittedCode] = useState('')
@@ -39,7 +41,7 @@ export function VoucherExample() {
             {error && <p className="example-error">{error.message}{reason ? ` (${reason})` : ''}</p>}
 
             {voucher?.subscriptionsToShow?.length ? (
-                <p>Subscriptions to show: {voucher.subscriptionsToShow.map((s) => s.name).join(', ')}</p>
+                <p>Subscriptions to show: {voucher.subscriptionsToShow.map((s) => resolveTranslation(s.name, s.id)).join(', ')}</p>
             ) : null}
 
             <pre>{JSON.stringify(voucher?.voucherInfo ?? null, null, 2)}</pre>

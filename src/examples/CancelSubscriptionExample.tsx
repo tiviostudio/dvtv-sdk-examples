@@ -2,6 +2,7 @@ import { useCancelSubscription, useOrganizationSubscriptions, useUser, PurchaseS
 import { useMemo, useState } from 'react'
 
 import { dvtvConfig } from '../config'
+import { resolveTranslation } from '../utils/resolveTranslation'
 
 export function CancelSubscriptionExample() {
     const { user } = useUser()
@@ -45,7 +46,7 @@ export function CancelSubscriptionExample() {
                     {purchasableIds.map((id) => {
                         const sub = subscriptions.find((s) => s.id === id)
                         return (
-                            <option key={id} value={id}>{sub?.name ?? id}</option>
+                            <option key={id} value={id}>{resolveTranslation(sub?.name, id)}</option>
                         )
                     })}
                 </select>

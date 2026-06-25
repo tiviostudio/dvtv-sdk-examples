@@ -9,6 +9,7 @@ import {
     exampleDefinitions,
     LoginExample,
     SeriesListExample,
+    SeriesDetailExample,
     SubscriptionsExample,
     VoucherExample,
     type ExampleId,
@@ -17,13 +18,33 @@ import {
 export default function App() {
     const [activeExample, setActiveExample] = useState<ExampleId>('login')
     const [articleId, setArticleId] = useState<string>(dvtvConfig.sampleArticleId)
+    const [seriesOrganizationId, setSeriesOrganizationId] = useState<string>(
+        dvtvConfig.sampleSeriesOrganizationId,
+    )
+    const [seriesUrlHandle, setSeriesUrlHandle] = useState('')
 
     const renderExample = () => {
         switch (activeExample) {
             case 'login':
                 return <LoginExample />
             case 'series':
-                return <SeriesListExample />
+                return (
+                    <SeriesListExample
+                        onSelectSeries={(item) => {
+                            setSeriesOrganizationId(item.organizationId)
+                            setSeriesUrlHandle(item.urlHandle)
+                            setActiveExample('series-detail')
+                        }}
+                    />
+                )
+            case 'series-detail':
+                return (
+                    <SeriesDetailExample
+                        organizationId={seriesOrganizationId}
+                        urlHandle={seriesUrlHandle}
+                        onOrganizationIdChange={setSeriesOrganizationId}
+                    />
+                )
             case 'articles':
                 return (
                     <ArticlesListExample

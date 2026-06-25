@@ -2,6 +2,7 @@ import { useOrganizationSubscriptions, usePurchaseSubscription, PurchaseStatus }
 import { useEffect, useState } from 'react'
 
 import { dvtvConfig } from '../config'
+import { resolveTranslation } from '../utils/resolveTranslation'
 
 function SubscriptionPurchasePanel({ monetizationId }: { monetizationId: string }) {
     const {
@@ -51,7 +52,7 @@ export function SubscriptionsExample() {
                 >
                     <option value="">— select subscription —</option>
                     {subscriptions.map((sub) => (
-                        <option key={sub.id} value={sub.id}>{sub.name} ({sub.id})</option>
+                        <option key={sub.id} value={sub.id}>{resolveTranslation(sub.name, sub.id)} ({sub.id})</option>
                     ))}
                 </select>
             </div>
