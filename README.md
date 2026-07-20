@@ -40,6 +40,13 @@ Screen, row, tag and article ids for examples are in [`src/config.ts`](src/confi
 | Subscriptions | `useOrganizationSubscriptions`, `usePurchaseSubscription` |
 | Voucher | `useVoucher` |
 | Cancel subscription | `useCancelSubscription`, `useUser` |
+| Video preview & paywall | `switchApplicationByHandle`, `useVideo`, `WebPlayer`; linked `TASTING` preview and automatic payment overlay |
+
+For videos in a TivioPro series application, await
+`tivio.organization.switchApplicationByHandle(urlHandle)` before mounting `WebPlayer`.
+The player must receive the main `videos/<id>` path: a paid video with a linked
+`TASTING` plays the preview and then shows the paywall, while a paid video without
+a valid `TASTING` shows the paywall before playback.
 
 ## Scripts
 

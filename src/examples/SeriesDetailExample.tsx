@@ -33,6 +33,7 @@ type Props = {
     organizationId: string
     urlHandle: string
     onOrganizationIdChange: (organizationId: string) => void
+    onSelectVideo?: (videoId: string) => void
 }
 
 const episodeComparator = (left: SeriesVideo, right: SeriesVideo) => {
@@ -58,6 +59,7 @@ export function SeriesDetailExample({
     organizationId,
     urlHandle,
     onOrganizationIdChange,
+    onSelectVideo,
 }: Props) {
     const tivio = useTivioApi()
     const [inputOrgId, setInputOrgId] = useState(organizationId)
@@ -244,7 +246,14 @@ export function SeriesDetailExample({
 
                     <div className="article-list">
                         {visibleVideos.map((video) => (
-                            <div key={video.id} className="article-card">
+                            <div
+                                key={video.id}
+                                className="article-card"
+                                onClick={() => onSelectVideo?.(video.id)}
+                                onKeyDown={(event) => event.key === 'Enter' && onSelectVideo?.(video.id)}
+                                role={onSelectVideo ? 'button' : undefined}
+                                tabIndex={onSelectVideo ? 0 : undefined}
+                            >
                                 {video.cover && <img src={video.cover} alt="" />}
                                 <div>
                                     <h3>{resolveTranslation(video.name, video.id)}</h3>
@@ -260,6 +269,9 @@ export function SeriesDetailExample({
                                             ? ` · ep. ${video.episodeNumber}`
                                             : ''}
                                     </p>
+                                    {onSelectVideo && (
+                                        <p className="example-muted">Open player &amp; inspect paywall</p>
+                                    )}
                                 </div>
                             </div>
                         ))}

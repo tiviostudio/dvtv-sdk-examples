@@ -6,6 +6,7 @@ export { ArticleDetailExample } from './ArticleDetailExample'
 export { SubscriptionsExample } from './SubscriptionsExample'
 export { VoucherExample } from './VoucherExample'
 export { CancelSubscriptionExample } from './CancelSubscriptionExample'
+export { VideoPlaybackExample } from './VideoPlaybackExample'
 
 export type ExampleId =
     | 'login'
@@ -16,6 +17,7 @@ export type ExampleId =
     | 'subscriptions'
     | 'voucher'
     | 'cancel-subscription'
+    | 'video-playback'
 
 export const exampleDefinitions: { id: ExampleId; label: string }[] = [
     { id: 'login', label: 'Login & registration' },
@@ -26,4 +28,5 @@ export const exampleDefinitions: { id: ExampleId; label: string }[] = [
     { id: 'subscriptions', label: 'Subscriptions' },
     { id: 'voucher', label: 'Voucher' },
     { id: 'cancel-subscription', label: 'Cancel subscription' },
+    { id: 'video-playback', label: 'Video preview & paywall' },
 ]

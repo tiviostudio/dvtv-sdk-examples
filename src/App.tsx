@@ -11,6 +11,7 @@ import {
     SeriesListExample,
     SeriesDetailExample,
     SubscriptionsExample,
+    VideoPlaybackExample,
     VoucherExample,
     type ExampleId,
 } from './examples'
@@ -22,6 +23,8 @@ export default function App() {
         dvtvConfig.sampleSeriesOrganizationId,
     )
     const [seriesUrlHandle, setSeriesUrlHandle] = useState('')
+    const [playbackVideoId, setPlaybackVideoId] = useState('J7BIseMhYnr8AhamHoCx')
+    const [playbackApplicationHandle, setPlaybackApplicationHandle] = useState('cobykdyby')
 
     const renderExample = () => {
         switch (activeExample) {
@@ -43,6 +46,11 @@ export default function App() {
                         organizationId={seriesOrganizationId}
                         urlHandle={seriesUrlHandle}
                         onOrganizationIdChange={setSeriesOrganizationId}
+                        onSelectVideo={(videoId) => {
+                            setPlaybackVideoId(videoId)
+                            setPlaybackApplicationHandle(seriesUrlHandle)
+                            setActiveExample('video-playback')
+                        }}
                     />
                 )
             case 'articles':
@@ -67,6 +75,13 @@ export default function App() {
                 return <VoucherExample />
             case 'cancel-subscription':
                 return <CancelSubscriptionExample />
+            case 'video-playback':
+                return (
+                    <VideoPlaybackExample
+                        initialVideoId={playbackVideoId}
+                        initialApplicationHandle={playbackApplicationHandle}
+                    />
+                )
             default:
                 return null
         }
