@@ -34,7 +34,7 @@ Screen, row, tag and article ids for examples are in [`src/config.ts`](src/confi
 |---------|----------|
 | Login & registration | `useUser`, `bundle.auth.signInWithEmailAndPassword`, `createUserWithEmailAndPassword`, `signOut` |
 | Series | `getOrganizationIdsInTivioPro`, `getTivioProApplicationsByOrganizationIds` |
-| Series detail | `getSeriesContentByOrganizationId`, `useTaggedVideos` (episodes by tag + season) |
+| Series detail | `getVideosByOrganizationId` (published videos), optional `getSeriesContentByOrganizationId` metadata, client-side season filtering |
 | Articles (Časopisy) | `getArticlesByTagId` or `useRowsInScreen` + `useItemsInRow` |
 | Article detail | `bundle.tivio.getArticleByIdOrUrlName` |
 | Subscriptions | `useOrganizationSubscriptions`, `usePurchaseSubscription` |

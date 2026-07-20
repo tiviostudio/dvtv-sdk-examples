@@ -1,22 +1,57 @@
-import { useTaggedVideos } from '@tivio/sdk-react'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import { dvtvConfig } from '../config'
 import { useTivioApi } from '../hooks/useTivioApi'
 import { resolveTranslation } from '../utils/resolveTranslation'
 
+type TranslationField = Parameters<typeof resolveTranslation>[0]
+
 type SeriesMeta = {
     name: string
     description?: string
     cover?: string
-    tagId: string
-    availableSeasons: { seasonNumber: number }[]
+    tagId?: string
+}
+
+type SeriesContent = {
+    name: TranslationField
+    description?: TranslationField
+    cover?: string
+    originalTagId?: string
+}
+
+type SeriesVideo = {
+    id: string
+    name: TranslationField
+    description?: TranslationField
+    cover?: string
+    seasonNumber?: number
+    episodeNumber?: number
 }
 
 type Props = {
     organizationId: string
     urlHandle: string
     onOrganizationIdChange: (organizationId: string) => void
+}
+
+const episodeComparator = (left: SeriesVideo, right: SeriesVideo) => {
+    const seasonDifference = (left.seasonNumber ?? Number.MAX_SAFE_INTEGER)
+        - (right.seasonNumber ?? Number.MAX_SAFE_INTEGER)
+    if (seasonDifference !== 0) {
+        return seasonDifference
+    }
+
+    const episodeDifference = (left.episodeNumber ?? Number.MAX_SAFE_INTEGER)
+        - (right.episodeNumber ?? Number.MAX_SAFE_INTEGER)
+    if (episodeDifference !== 0) {
+        return episodeDifference
+    }
+
+    return resolveTranslation(left.name, left.id).localeCompare(
+        resolveTranslation(right.name, right.id),
+        'cs',
+    )
 }
 
 export function SeriesDetailExample({
@@ -27,47 +62,75 @@ export function SeriesDetailExample({
     const tivio = useTivioApi()
     const [inputOrgId, setInputOrgId] = useState(organizationId)
     const [seriesMeta, setSeriesMeta] = useState<SeriesMeta | null>(null)
-    const [seasonNumber, setSeasonNumber] = useState(1)
-    const [loadingMeta, setLoadingMeta] = useState(false)
-    const [metaError, setMetaError] = useState<string | null>(null)
+    const [videos, setVideos] = useState<SeriesVideo[]>([])
+    const [seasonNumber, setSeasonNumber] = useState<number | 'all'>('all')
+    const [loading, setLoading] = useState(false)
+    const [videosError, setVideosError] = useState<string | null>(null)
+    const [metaNotice, setMetaNotice] = useState<string | null>(null)
 
-    const loadSeriesMeta = useCallback(async (orgId: string) => {
+    const loadSeries = useCallback(async (orgId: string) => {
         if (!orgId) {
             return
         }
-        setLoadingMeta(true)
-        setMetaError(null)
+
+        setLoading(true)
+        setVideosError(null)
+        setMetaNotice(null)
+        setSeriesMeta(null)
+        setVideos([])
+        setSeasonNumber('all')
+
         try {
-            if (!tivio?.getSeriesContentByOrganizationId) {
-                throw new Error('tivio.getSeriesContentByOrganizationId is not available')
+            if (!tivio?.getVideosByOrganizationId) {
+                throw new Error('tivio.getVideosByOrganizationId is not available')
             }
 
-            const seriesList = await tivio.getSeriesContentByOrganizationId(orgId)
-            const series = seriesList[0]
+            const metadataPromise = tivio.getSeriesContentByOrganizationId
+                ? tivio.getSeriesContentByOrganizationId(orgId)
+                : Promise.resolve([])
+
+            const [videosResult, metadataResult] = await Promise.allSettled([
+                tivio.getVideosByOrganizationId(orgId, {
+                    limit: 500,
+                    initApplications: false,
+                }),
+                metadataPromise,
+            ])
+
+            if (videosResult.status === 'rejected') {
+                throw videosResult.reason
+            }
+
+            const organizationVideos = videosResult.value as SeriesVideo[]
+            setVideos([...organizationVideos].sort(episodeComparator))
+
+            if (metadataResult.status === 'rejected') {
+                const message = metadataResult.reason instanceof Error
+                    ? metadataResult.reason.message
+                    : String(metadataResult.reason)
+                setMetaNotice(`Optional series metadata could not be loaded: ${message}`)
+                return
+            }
+
+            const series = (metadataResult.value as SeriesContent[])[0]
             if (!series) {
-                throw new Error(`No series content found for organization ${orgId}`)
-            }
-
-            const tagId = series.originalTagId
-            if (!tagId) {
-                throw new Error('Series has no originalTagId — cannot load episodes')
+                setMetaNotice(
+                    'No canonical SERIES metadata exists for this TivioPro application. '
+                    + 'Its published videos are loaded directly from the organization.',
+                )
+                return
             }
 
             setSeriesMeta({
                 name: resolveTranslation(series.name),
                 description: resolveTranslation(series.description),
                 cover: series.cover,
-                tagId,
-                availableSeasons: series.availableSeasons?.length
-                    ? series.availableSeasons
-                    : [{ seasonNumber: 1 }],
+                tagId: series.originalTagId,
             })
-            setSeasonNumber(series.availableSeasons?.[0]?.seasonNumber ?? 1)
-        } catch (e) {
-            setMetaError(e instanceof Error ? e.message : String(e))
-            setSeriesMeta(null)
+        } catch (error) {
+            setVideosError(error instanceof Error ? error.message : String(error))
         } finally {
-            setLoadingMeta(false)
+            setLoading(false)
         }
     }, [tivio])
 
@@ -77,28 +140,31 @@ export function SeriesDetailExample({
 
     useEffect(() => {
         if (organizationId) {
-            void loadSeriesMeta(organizationId)
+            void loadSeries(organizationId)
         }
-    }, [organizationId, loadSeriesMeta])
+    }, [organizationId, loadSeries])
 
-    const { pagination, error: episodesError } = useTaggedVideos(
-        seriesMeta?.tagId ? [seriesMeta.tagId] : [],
-        {
-            noLimit: true,
-            fetchTags: false,
-            where: [{ field: 'seasonNumber', operator: '==', value: seasonNumber }],
-            orderBy: [{ field: 'episodeNumber', directionStr: 'asc' }],
-        },
+    const availableSeasons = useMemo(() => Array.from(new Set(
+        videos
+            .map((video) => video.seasonNumber)
+            .filter((value): value is number => typeof value === 'number'),
+    )).sort((left, right) => left - right), [videos])
+
+    const unseasonedCount = useMemo(
+        () => videos.filter((video) => video.seasonNumber == null).length,
+        [videos],
     )
 
-    const episodes = pagination?.items ?? []
+    const visibleVideos = seasonNumber === 'all'
+        ? videos
+        : videos.filter((video) => video.seasonNumber === seasonNumber)
 
     return (
         <div className="example">
             <h2>Series detail</h2>
             <p className="example-muted">
-                Load series metadata via <code>getSeriesContentByOrganizationId</code>,
-                then episodes via <code>useTaggedVideos</code> (series tag + season).
+                Load published videos via <code>getVideosByOrganizationId</code>.
+                Canonical series metadata is optional and season filtering happens client-side.
             </p>
 
             <div className="example-actions">
@@ -106,14 +172,14 @@ export function SeriesDetailExample({
                     organizationId{' '}
                     <input
                         value={inputOrgId}
-                        onChange={(e) => setInputOrgId(e.target.value)}
+                        onChange={(event) => setInputOrgId(event.target.value)}
                         placeholder="TivioPro sub-org id"
                     />
                 </label>
                 <button
                     type="button"
                     onClick={() => onOrganizationIdChange(inputOrgId)}
-                    disabled={!inputOrgId || loadingMeta}
+                    disabled={!inputOrgId || loading}
                 >
                     Load
                 </button>
@@ -125,30 +191,40 @@ export function SeriesDetailExample({
                 </p>
             )}
 
-            {loadingMeta && <p>Loading series…</p>}
-            {metaError && <p className="example-error">{metaError}</p>}
+            {loading && <p>Loading videos…</p>}
+            {videosError && <p className="example-error">{videosError}</p>}
+            {metaNotice && <p className="example-muted">{metaNotice}</p>}
 
             {seriesMeta && (
                 <>
                     <h3>{seriesMeta.name}</h3>
                     {seriesMeta.description && <p>{seriesMeta.description}</p>}
                     {seriesMeta.cover && <img src={seriesMeta.cover} alt="" style={{ maxWidth: 240 }} />}
+                    {seriesMeta.tagId && (
+                        <p className="example-muted">
+                            canonical tagId: <code>{seriesMeta.tagId}</code>
+                        </p>
+                    )}
+                </>
+            )}
 
-                    <p className="example-muted">
-                        tagId: <code>{seriesMeta.tagId}</code>
-                    </p>
-
-                    {seriesMeta.availableSeasons.length > 1 && (
+            {!loading && !videosError && organizationId && (
+                <>
+                    {availableSeasons.length > 0 && (
                         <div className="example-actions">
                             <label>
                                 Season{' '}
                                 <select
                                     value={seasonNumber}
-                                    onChange={(e) => setSeasonNumber(Number(e.target.value))}
+                                    onChange={(event) => {
+                                        const value = event.target.value
+                                        setSeasonNumber(value === 'all' ? 'all' : Number(value))
+                                    }}
                                 >
-                                    {seriesMeta.availableSeasons.map((season) => (
-                                        <option key={season.seasonNumber} value={season.seasonNumber}>
-                                            {season.seasonNumber}
+                                    <option value="all">All</option>
+                                    {availableSeasons.map((availableSeason) => (
+                                        <option key={availableSeason} value={availableSeason}>
+                                            {availableSeason}
                                         </option>
                                     ))}
                                 </select>
@@ -156,23 +232,32 @@ export function SeriesDetailExample({
                         </div>
                     )}
 
-                    {episodesError && <p className="example-error">{episodesError.message}</p>}
-                    {pagination?.loading && <p>Loading episodes…</p>}
+                    <p className="example-muted">
+                        {visibleVideos.length} video(s)
+                        {seasonNumber !== 'all' ? ` of ${videos.length} total` : ''}
+                    </p>
+                    {seasonNumber === 'all' && unseasonedCount > 0 && (
+                        <p className="example-muted">
+                            {unseasonedCount} video(s) have no seasonNumber and remain visible in All.
+                        </p>
+                    )}
 
-                    <p className="example-muted">{episodes.length} episode(s)</p>
                     <div className="article-list">
-                        {episodes.map((episode) => (
-                            <div key={episode.id} className="article-card">
-                                {episode.cover && <img src={episode.cover} alt="" />}
+                        {visibleVideos.map((video) => (
+                            <div key={video.id} className="article-card">
+                                {video.cover && <img src={video.cover} alt="" />}
                                 <div>
-                                    <h3>{resolveTranslation(episode.name, episode.id)}</h3>
-                                    {'description' in episode && episode.description && (
-                                        <p>{resolveTranslation(episode.description)}</p>
+                                    <h3>{resolveTranslation(video.name, video.id)}</h3>
+                                    {video.description != null && (
+                                        <p>{resolveTranslation(video.description)}</p>
                                     )}
                                     <p className="example-muted">
-                                        id: {episode.id}
-                                        {'episodeNumber' in episode && episode.episodeNumber != null
-                                            ? ` · ep. ${episode.episodeNumber}`
+                                        id: {video.id}
+                                        {video.seasonNumber != null
+                                            ? ` · season ${video.seasonNumber}`
+                                            : ''}
+                                        {video.episodeNumber != null
+                                            ? ` · ep. ${video.episodeNumber}`
                                             : ''}
                                     </p>
                                 </div>
