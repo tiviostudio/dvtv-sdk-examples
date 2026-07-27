@@ -41,12 +41,21 @@ Screen, row, tag and article ids for examples are in [`src/config.ts`](src/confi
 | Voucher | `useVoucher` |
 | Cancel subscription | `useCancelSubscription`, `useUser` |
 | Video preview & paywall | `switchApplicationByHandle`, `useVideo`, `WebPlayer`; linked `TASTING` preview and automatic payment overlay |
+| Qerko checkout | `purchaseSubscriptionWithQerko`, `webPaymentGatewayLink`, purchase status from `useUser` |
 
 For videos in a TivioPro series application, await
 `tivio.organization.switchApplicationByHandle(urlHandle)` before mounting `WebPlayer`.
 The player must receive the main `videos/<id>` path: a paid video with a linked
 `TASTING` plays the preview and then shows the paywall, while a paid video without
 a valid `TASTING` shows the paywall before playback.
+
+Open a specific example directly with the `example` query parameter, for example
+[`?example=qerko-checkout`](http://localhost:5173/?example=qerko-checkout).
+
+The Qerko example opens the returned hosted checkout URL in a new tab as the
+supported integration. It also includes an explicitly experimental iframe mode
+for validating Qerko checkout, wallet and 3DS behavior before using it in
+production.
 
 ## Scripts
 

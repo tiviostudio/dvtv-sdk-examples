@@ -98,6 +98,48 @@
     border-color: #111;
 }
 
+.example-link-button {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.45rem 0.85rem;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    color: #111;
+    background: #fff;
+    text-decoration: none;
+}
+
+.example-link-button.primary {
+    color: #fff;
+    border-color: #111;
+    background: #111;
+}
+
+.qerko-checkout-shell {
+    overflow: hidden;
+    margin-top: 1rem;
+    border: 1px solid #d7d7d7;
+    border-radius: 8px;
+    background: #fff;
+}
+
+.qerko-checkout-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.65rem 0.75rem;
+    border-bottom: 1px solid #e5e5e5;
+}
+
+.qerko-checkout-frame {
+    display: block;
+    width: 100%;
+    height: 490px;
+    border: 0;
+    background: transparent;
+}
+
 .example-error {
     color: #b00020;
 }

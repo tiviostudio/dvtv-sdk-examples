@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 import './App.css'
 import { dvtvConfig } from './config'
@@ -8,6 +8,7 @@ import {
     CancelSubscriptionExample,
     exampleDefinitions,
     LoginExample,
+    QerkoCheckoutExample,
     SeriesListExample,
     SeriesDetailExample,
     SubscriptionsExample,
@@ -16,8 +17,15 @@ import {
     type ExampleId,
 } from './examples'
 
+function getInitialExample(): ExampleId {
+    const requestedExample = new URLSearchParams(window.location.search).get('example')
+    return exampleDefinitions.some(({ id }) => id === requestedExample)
+        ? requestedExample as ExampleId
+        : 'login'
+}
+
 export default function App() {
-    const [activeExample, setActiveExample] = useState<ExampleId>('login')
+    const [activeExample, setActiveExample] = useState<ExampleId>(getInitialExample)
     const [articleId, setArticleId] = useState<string>(dvtvConfig.sampleArticleId)
     const [seriesOrganizationId, setSeriesOrganizationId] = useState<string>(
         dvtvConfig.sampleSeriesOrganizationId,
@@ -25,6 +33,12 @@ export default function App() {
     const [seriesUrlHandle, setSeriesUrlHandle] = useState('')
     const [playbackVideoId, setPlaybackVideoId] = useState('J7BIseMhYnr8AhamHoCx')
     const [playbackApplicationHandle, setPlaybackApplicationHandle] = useState('cobykdyby')
+
+    useEffect(() => {
+        const url = new URL(window.location.href)
+        url.searchParams.set('example', activeExample)
+        window.history.replaceState(null, '', url)
+    }, [activeExample])
 
     const renderExample = () => {
         switch (activeExample) {
@@ -82,6 +96,8 @@ export default function App() {
                         initialApplicationHandle={playbackApplicationHandle}
                     />
                 )
+            case 'qerko-checkout':
+                return <QerkoCheckoutExample />
             default:
                 return null
         }
