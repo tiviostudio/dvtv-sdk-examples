@@ -194,6 +194,64 @@
     background: #000;
 }
 
+.series-purchase-backdrop {
+    position: fixed;
+    z-index: 1000;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    padding: 1rem;
+    background: rgba(0, 0, 0, 0.72);
+}
+
+.series-purchase-dialog {
+    width: min(760px, 100%);
+    max-height: calc(100vh - 2rem);
+    overflow: auto;
+    padding: 1.25rem;
+    border-radius: 12px;
+    background: #fff;
+    box-shadow: 0 24px 80px rgba(0, 0, 0, 0.35);
+}
+
+.series-purchase-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.series-purchase-header h2,
+.series-purchase-header p {
+    margin: 0 0 0.35rem;
+}
+
+.series-purchase-options {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 0.75rem;
+    margin: 1rem 0;
+}
+
+.series-purchase-option {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 1rem;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+}
+
+.series-purchase-option h3,
+.series-purchase-option p {
+    margin: 0;
+}
+
+.series-purchase-option button {
+    margin-top: auto;
+}
+
 .article-list {
     display: flex;
     flex-direction: column;

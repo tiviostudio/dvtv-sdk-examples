@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 
+import packageJson from '../package.json'
 import './App.css'
 import { dvtvConfig } from './config'
 import {
@@ -11,6 +12,7 @@ import {
     QerkoCheckoutExample,
     SeriesListExample,
     SeriesDetailExample,
+    SeriesPurchaseExample,
     SubscriptionsExample,
     VideoPlaybackExample,
     VoucherExample,
@@ -67,6 +69,8 @@ export default function App() {
                         }}
                     />
                 )
+            case 'series-purchase':
+                return <SeriesPurchaseExample />
             case 'articles':
                 return (
                     <ArticlesListExample
@@ -107,7 +111,7 @@ export default function App() {
         <div className="app">
             <aside className="app-sidebar">
                 <h1>DVTV SDK examples</h1>
-                <p>@tivio/sdk-react</p>
+                <p>@tivio/sdk-react {packageJson.dependencies['@tivio/sdk-react']}</p>
                 <nav className="app-nav">
                     {exampleDefinitions.map(({ id, label }) => (
                         <button

@@ -62,6 +62,15 @@ function PlayerPanel({ selection, playerKey }: {
 
     return (
         <>
+            <p>
+                Signed in through this SDK instance: <strong>{String(isSignedIn)}</strong>
+            </p>
+            {!isSignedIn && (
+                <p className="example-error">
+                    Payment actions require a user signed in through this SDK example. Open{' '}
+                    <strong>Login &amp; registration</strong>, sign in, and then return here.
+                </p>
+            )}
             <div className="video-player-frame">
                 {WebPlayer ? (
                     <WebPlayer
@@ -170,6 +179,12 @@ export function VideoPlaybackExample({
                 <code>tivio.organization.switchApplicationByHandle(urlHandle)</code> before mounting{' '}
                 <code>WebPlayer</code>. Without this step, series monetizations are filtered out and the
                 paywall does not activate.
+            </div>
+
+            <div className="example-note">
+                This app uses the npm package <code>@tivio/sdk-react 11.0.1</code>. The player and paywall
+                UI are loaded from a separately versioned <code>core-react-dom</code> remote bundle, so its
+                version number is independent from the npm SDK version.
             </div>
 
             <div className="playback-presets">

@@ -12,7 +12,7 @@
         "postinstall": "node scripts/patch-sdk-react.mjs"
     },
     "dependencies": {
-        "@tivio/sdk-react": "10.2.1",
+        "@tivio/sdk-react": "11.0.1",
         "i18next": "^19.8.4",
         "react": "^18.2.0",
         "react-dom": "^18.2.0",
