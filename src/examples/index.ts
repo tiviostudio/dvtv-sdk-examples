@@ -9,6 +9,7 @@ export { VoucherExample } from './VoucherExample'
 export { CancelSubscriptionExample } from './CancelSubscriptionExample'
 export { VideoPlaybackExample } from './VideoPlaybackExample'
 export { QerkoCheckoutExample } from './QerkoCheckoutExample'
+export { GiftSubscriptionExample } from './GiftSubscriptionExample'
 
 export type ExampleId =
     | 'login'
@@ -22,6 +23,7 @@ export type ExampleId =
     | 'cancel-subscription'
     | 'video-playback'
     | 'qerko-checkout'
+    | 'gift-subscription'
 
 export const exampleDefinitions: { id: ExampleId; label: string }[] = [
     { id: 'login', label: 'Login & registration' },
@@ -35,4 +37,5 @@ export const exampleDefinitions: { id: ExampleId; label: string }[] = [
     { id: 'cancel-subscription', label: 'Cancel subscription' },
     { id: 'video-playback', label: 'Video preview & paywall' },
     { id: 'qerko-checkout', label: 'Qerko checkout' },
+    { id: 'gift-subscription', label: 'Gift subscription' },
 ]
