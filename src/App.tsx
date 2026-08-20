@@ -8,6 +8,7 @@ import {
     ArticlesListExample,
     CancelSubscriptionExample,
     exampleDefinitions,
+    GiftSubscriptionExample,
     LoginExample,
     QerkoCheckoutExample,
     SeriesListExample,
@@ -102,6 +103,8 @@ export default function App() {
                 )
             case 'qerko-checkout':
                 return <QerkoCheckoutExample />
+            case 'gift-subscription':
+                return <GiftSubscriptionExample />
             default:
                 return null
         }

@@ -115,6 +115,58 @@
     background: #111;
 }
 
+.gift-subscription-form {
+    display: grid;
+    grid-template-columns: minmax(240px, 2fr) minmax(180px, 1fr);
+    gap: 0.75rem;
+    margin: 1rem 0;
+}
+
+.gift-subscription-form label {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.gift-subscription-form select,
+.gift-subscription-form input {
+    padding: 0.5rem 0.6rem;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    background: #fff;
+    font: inherit;
+}
+
+.gift-voucher-result {
+    margin: 1rem 0;
+    padding: 1rem;
+    border: 1px solid #b6d8b6;
+    border-radius: 8px;
+    background: #f2fbf2;
+}
+
+.gift-voucher-result h3 {
+    margin-top: 0;
+}
+
+.gift-voucher-result > code {
+    display: inline-block;
+    padding: 0.6rem 0.8rem;
+    border-radius: 6px;
+    background: #fff;
+    font-size: 1.25rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+}
+
+@media (max-width: 700px) {
+    .gift-subscription-form {
+        grid-template-columns: 1fr;
+    }
+}
+
 .qerko-checkout-shell {
     overflow: hidden;
     margin-top: 1rem;
