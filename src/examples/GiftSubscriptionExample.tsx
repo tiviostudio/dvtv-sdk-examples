@@ -4,10 +4,12 @@ import {
     useUser,
     type QerkoPaymentInfo,
 } from '@tivio/sdk-react'
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { useTivioApi } from '../hooks/useTivioApi'
 import { resolveTranslation } from '../utils/resolveTranslation'
+
+const DEFAULT_APPLICATION_HANDLE = 'cobykdyby'
 
 function getDefaultExpirationDate() {
     const expirationDate = new Date()
@@ -17,12 +19,16 @@ function getDefaultExpirationDate() {
 
 export function GiftSubscriptionExample() {
     const tivio = useTivioApi()
+    const initialized = useRef(false)
     const { subscriptions } = useOrganizationSubscriptions()
     const { user, isSignedIn } = useUser()
     const giftSubscriptions = useMemo(
         () => subscriptions.filter((subscription) => subscription.isPurchasableAsVoucher),
         [subscriptions],
     )
+    const [inputHandle, setInputHandle] = useState(DEFAULT_APPLICATION_HANDLE)
+    const [activeHandle, setActiveHandle] = useState('')
+    const [switchingApplication, setSwitchingApplication] = useState(false)
     const [selectedId, setSelectedId] = useState('')
     const [expirationDate, setExpirationDate] = useState(getDefaultExpirationDate)
     const [paymentInfo, setPaymentInfo] = useState<QerkoPaymentInfo | null>(null)
@@ -50,6 +56,40 @@ export function GiftSubscriptionExample() {
     const voucherCode = voucherPurchase?.voucherId
     const isPaid = voucherPurchase?.status === PurchaseStatus.PAID
     const checkoutUrl = paymentInfo?.webPaymentGatewayLink
+
+    const switchApplication = useCallback(async (applicationHandle: string) => {
+        setSwitchingApplication(true)
+        setError(null)
+        setPaymentInfo(null)
+        setShowIframe(false)
+        setCopied(false)
+
+        try {
+            if (!tivio?.organization?.switchApplicationByHandle) {
+                throw new Error('tivio.organization.switchApplicationByHandle is not available.')
+            }
+
+            await tivio.organization.switchApplicationByHandle(applicationHandle)
+            setActiveHandle(applicationHandle)
+        } catch (cause) {
+            setActiveHandle('')
+            setError(cause instanceof Error ? cause.message : String(cause))
+        } finally {
+            setSwitchingApplication(false)
+        }
+    }, [tivio])
+
+    useEffect(() => {
+        if (!tivio || initialized.current) return
+
+        initialized.current = true
+        void switchApplication(DEFAULT_APPLICATION_HANDLE)
+    }, [switchApplication, tivio])
+
+    useEffect(() => () => {
+        const resetToDefault = tivio?.organization?.switchApplicationByHandle?.()
+        resetToDefault?.catch?.(() => undefined)
+    }, [tivio])
 
     const createGiftPayment = async () => {
         setError(null)
@@ -115,6 +155,38 @@ export function GiftSubscriptionExample() {
                 determined by the selected monetization.
             </div>
 
+            <div className="example-note">
+                To gift access to a series, switch to the series TivioPro application first. The example then
+                lists giftable subscriptions from that application. The voucher grants everything covered by
+                the selected subscription, so the series should use its own subscription monetization.
+            </div>
+
+            <form
+                className="example-actions"
+                onSubmit={(event) => {
+                    event.preventDefault()
+                    void switchApplication(inputHandle.trim())
+                }}
+            >
+                <label>
+                    Series application urlHandle{' '}
+                    <input
+                        onChange={(event) => setInputHandle(event.target.value)}
+                        placeholder={DEFAULT_APPLICATION_HANDLE}
+                        value={inputHandle}
+                    />
+                </label>
+                <button disabled={switchingApplication || !inputHandle.trim()} type="submit">
+                    {switchingApplication ? 'Switching…' : 'Load giftable subscriptions'}
+                </button>
+            </form>
+
+            {activeHandle && (
+                <p>
+                    Active application: <code>{activeHandle}</code>
+                </p>
+            )}
+
             <p>
                 Signed in: <strong>{String(isSignedIn)}</strong>
             </p>
@@ -131,7 +203,7 @@ export function GiftSubscriptionExample() {
                     <select
                         value={selectedId}
                         onChange={(event) => setSelectedId(event.target.value)}
-                        disabled={loading}
+                        disabled={loading || switchingApplication}
                     >
                         <option value="">— select subscription —</option>
                         {giftSubscriptions.map((subscription) => (
@@ -148,7 +220,7 @@ export function GiftSubscriptionExample() {
                         value={expirationDate}
                         min={new Date().toISOString().slice(0, 10)}
                         onChange={(event) => setExpirationDate(event.target.value)}
-                        disabled={loading}
+                        disabled={loading || switchingApplication}
                     />
                 </label>
             </div>
@@ -163,7 +235,7 @@ export function GiftSubscriptionExample() {
                 <button
                     type="button"
                     className="primary"
-                    disabled={!isSignedIn || !selectedId || !expirationDate || loading}
+                    disabled={!isSignedIn || !activeHandle || !selectedId || !expirationDate || loading || switchingApplication}
                     onClick={() => void createGiftPayment()}
                 >
                     {loading ? 'Creating gift payment…' : 'Buy as a gift'}
