@@ -8,7 +8,7 @@ import App from './App'
 import { getTivioApplicationId, getTivioSecret } from './config'
 import './index.css'
 
-import type { Config } from '@tivio/sdk-react'
+import type { Config, InternalConfig } from '@tivio/sdk-react'
 
 const secret = getTivioSecret()
 const applicationId = getTivioApplicationId()
@@ -28,9 +28,7 @@ function MissingConfig() {
                     <code>VITE_TIVIO_APPLICATION_ID</code> — application id for the same organization
                 </li>
             </ul>
-            <p style={{ marginTop: 16 }}>
-                Both values must belong to the same organization. Tivio will provide them separately.
-            </p>
+            <p style={{ marginTop: 16 }}>Both values must belong to the same organization. Tivio will provide them separately.</p>
         </div>
     )
 }
@@ -55,8 +53,7 @@ function SdkReadyGate({ children }: { children: ReactNode }) {
                 <p style={{ color: 'crimson' }}>{bundle.error}</p>
                 {isApplicationNotFound && (
                     <p style={{ marginTop: 16 }}>
-                        Check that <code>VITE_TIVIO_SECRET</code> and{' '}
-                        <code>VITE_TIVIO_APPLICATION_ID</code> in <code>.env</code> belong to the same
+                        Check that <code>VITE_TIVIO_SECRET</code> and <code>VITE_TIVIO_APPLICATION_ID</code> in <code>.env</code> belong to the same
                         organization.
                     </p>
                 )}
@@ -73,7 +70,7 @@ const root = createRoot(container!)
 if (!secret || !applicationId) {
     root.render(<MissingConfig />)
 } else {
-    const tivioConf: Config = {
+    const tivioConf: Config & Pick<InternalConfig, 'bundleUrlOverride'> = {
         secret,
         applicationId,
         verbose: true,
@@ -81,6 +78,7 @@ if (!secret || !applicationId) {
         currency: 'CZK',
         language: LangCode.CS,
         cmp: 'none',
+        bundleUrlOverride: import.meta.env.VITE_TIVIO_BUNDLE_URL || undefined,
     }
 
     root.render(
