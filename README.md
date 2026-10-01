@@ -52,6 +52,18 @@ a valid `TASTING` shows the paywall before playback.
 Open a specific example directly with the `example` query parameter, for example
 [`?example=qerko-checkout`](http://localhost:5173/?example=qerko-checkout).
 
+For [`?example=gift-subscription`](http://localhost:5173/?example=gift-subscription),
+enter the series application handle (for example `cobykdyby`). The example awaits
+the application switch, verifies the active handle and organization ID, then calls
+`tivio.getSubscriptionsByOrganizationId(organizationId)`. This includes one-time
+offers, unlike the default `useOrganizationSubscriptions()` call. Only enabled
+offers with `isPurchasableAsVoucher` are selectable. An invalid application clears
+the offers instead of falling back to the main DVTV subscription.
+
+The voucher grants access through the selected monetization, not directly through
+the series ID. The series needs its own giftable subscription monetization if the
+gift should cover only that series.
+
 The Qerko example creates an order with a Qerko `webTheme` UUID and opens the
 returned `webPaymentGatewayLink` in an iframe. The optional checkout options are
 the sixth argument of `purchaseSubscriptionWithQerko` (after `quantity` and

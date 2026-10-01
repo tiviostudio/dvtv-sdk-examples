@@ -1,15 +1,25 @@
-import {
-    PurchaseStatus,
-    useOrganizationSubscriptions,
-    useUser,
-    type QerkoPaymentInfo,
-} from '@tivio/sdk-react'
+import { PurchaseStatus, useUser, type PurchasableMonetization, type QerkoPaymentInfo } from '@tivio/sdk-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { useTivioApi } from '../hooks/useTivioApi'
 import { resolveTranslation } from '../utils/resolveTranslation'
 
 const DEFAULT_APPLICATION_HANDLE = 'cobykdyby'
+
+interface GiftTivioApi {
+    organization: {
+        id: string | null
+        activeApplicationHandle: string | null
+        switchApplicationByHandle: (handle?: string, fallbackToDefault?: boolean) => Promise<void>
+    }
+    getSubscriptionsByOrganizationId: (organizationId: string) => Promise<PurchasableMonetization[]>
+    purchaseSubscriptionWithQerko: (
+        monetizationId: string,
+        voucher: { expirationDate: Date },
+        email: string | undefined,
+        quantity: number,
+    ) => Promise<QerkoPaymentInfo>
+}
 
 function getDefaultExpirationDate() {
     const expirationDate = new Date()
@@ -18,16 +28,18 @@ function getDefaultExpirationDate() {
 }
 
 export function GiftSubscriptionExample() {
-    const tivio = useTivioApi()
+    const tivio = useTivioApi() as unknown as GiftTivioApi | null
     const initialized = useRef(false)
-    const { subscriptions } = useOrganizationSubscriptions()
+    const loadRequest = useRef(0)
+    const [subscriptions, setSubscriptions] = useState<PurchasableMonetization[]>([])
     const { user, isSignedIn } = useUser()
     const giftSubscriptions = useMemo(
-        () => subscriptions.filter((subscription) => subscription.isPurchasableAsVoucher),
+        () => subscriptions.filter((subscription) => subscription.isPurchasableAsVoucher && subscription.purchaseDisabled !== true),
         [subscriptions],
     )
     const [inputHandle, setInputHandle] = useState(DEFAULT_APPLICATION_HANDLE)
     const [activeHandle, setActiveHandle] = useState('')
+    const [activeOrganizationId, setActiveOrganizationId] = useState('')
     const [switchingApplication, setSwitchingApplication] = useState(false)
     const [selectedId, setSelectedId] = useState('')
     const [expirationDate, setExpirationDate] = useState(getDefaultExpirationDate)
@@ -50,46 +62,84 @@ export function GiftSubscriptionExample() {
         setCopied(false)
     }, [selectedId])
 
-    const voucherPurchase = paymentInfo
-        ? user?.purchasedVouchers?.find((purchase) => purchase.id === paymentInfo.purchaseId)
-        : undefined
+    const voucherPurchase = paymentInfo ? user?.purchasedVouchers?.find((purchase) => purchase.id === paymentInfo.purchaseId) : undefined
     const voucherCode = voucherPurchase?.voucherId
     const isPaid = voucherPurchase?.status === PurchaseStatus.PAID
     const checkoutUrl = paymentInfo?.webPaymentGatewayLink
 
-    const switchApplication = useCallback(async (applicationHandle: string) => {
-        setSwitchingApplication(true)
-        setError(null)
-        setPaymentInfo(null)
-        setShowIframe(false)
-        setCopied(false)
-
-        try {
-            if (!tivio?.organization?.switchApplicationByHandle) {
-                throw new Error('tivio.organization.switchApplicationByHandle is not available.')
-            }
-
-            await tivio.organization.switchApplicationByHandle(applicationHandle)
-            setActiveHandle(applicationHandle)
-        } catch (cause) {
+    const switchApplication = useCallback(
+        async (applicationHandle: string) => {
+            const request = ++loadRequest.current
+            setSwitchingApplication(true)
+            setSubscriptions([])
+            setSelectedId('')
             setActiveHandle('')
-            setError(cause instanceof Error ? cause.message : String(cause))
-        } finally {
-            setSwitchingApplication(false)
-        }
-    }, [tivio])
+            setActiveOrganizationId('')
+            setError(null)
+            setPaymentInfo(null)
+            setShowIframe(false)
+            setCopied(false)
+
+            try {
+                if (!tivio?.organization?.switchApplicationByHandle) {
+                    throw new Error('tivio.organization.switchApplicationByHandle is not available.')
+                }
+
+                if (!tivio.getSubscriptionsByOrganizationId) {
+                    throw new Error('tivio.getSubscriptionsByOrganizationId is not available.')
+                }
+
+                await tivio.organization.switchApplicationByHandle(applicationHandle, false)
+                const organization = tivio.organization
+                const organizationId = organization.id
+                if (organization.activeApplicationHandle !== applicationHandle || !organizationId) {
+                    throw new Error('The requested series application is not active. No gift offers were loaded.')
+                }
+
+                // Unlike the default hook, this includes ONE_TIME_PAYMENT offers and uses the
+                // verified series organization rather than the organization active on mount.
+                const offers: PurchasableMonetization[] = await tivio.getSubscriptionsByOrganizationId(organizationId)
+                if (request !== loadRequest.current) {
+                    return
+                }
+                if (organization.activeApplicationHandle !== applicationHandle || organization.id !== organizationId) {
+                    throw new Error('The active application changed while loading gift offers. Load them again.')
+                }
+                setSubscriptions(offers)
+                setActiveHandle(organization.activeApplicationHandle)
+                setActiveOrganizationId(organizationId)
+            } catch (cause) {
+                if (request !== loadRequest.current) {
+                    return
+                }
+                setActiveHandle('')
+                setError(cause instanceof Error ? cause.message : String(cause))
+            } finally {
+                if (request === loadRequest.current) {
+                    setSwitchingApplication(false)
+                }
+            }
+        },
+        [tivio],
+    )
 
     useEffect(() => {
-        if (!tivio || initialized.current) return
+        if (!tivio || initialized.current) {
+            return
+        }
 
         initialized.current = true
         void switchApplication(DEFAULT_APPLICATION_HANDLE)
     }, [switchApplication, tivio])
 
-    useEffect(() => () => {
-        const resetToDefault = tivio?.organization?.switchApplicationByHandle?.()
-        resetToDefault?.catch?.(() => undefined)
-    }, [tivio])
+    useEffect(
+        () => () => {
+            loadRequest.current += 1
+            const resetToDefault = tivio?.organization?.switchApplicationByHandle?.()
+            resetToDefault?.catch?.(() => undefined)
+        },
+        [tivio],
+    )
 
     const createGiftPayment = async () => {
         setError(null)
@@ -105,6 +155,14 @@ export function GiftSubscriptionExample() {
             if (!selectedId) {
                 throw new Error('Select a subscription which can be purchased as a gift.')
             }
+            if (
+                !tivio ||
+                tivio.organization?.id !== activeOrganizationId ||
+                tivio.organization?.activeApplicationHandle !== activeHandle ||
+                !giftSubscriptions.some(({ id }) => id === selectedId)
+            ) {
+                throw new Error('The selected gift offer is no longer active. Load the series offers again.')
+            }
 
             const redeemUntil = new Date(`${expirationDate}T23:59:59`)
             if (Number.isNaN(redeemUntil.getTime()) || redeemUntil <= new Date()) {
@@ -114,12 +172,7 @@ export function GiftSubscriptionExample() {
                 throw new Error('purchaseSubscriptionWithQerko is not available in the loaded SDK bundle.')
             }
 
-            const result = await tivio.purchaseSubscriptionWithQerko(
-                selectedId,
-                { expirationDate: redeemUntil },
-                user.email,
-                1,
-            ) as QerkoPaymentInfo
+            const result = await tivio.purchaseSubscriptionWithQerko(selectedId, { expirationDate: redeemUntil }, user.email, 1)
 
             setPaymentInfo(result)
         } catch (cause) {
@@ -150,15 +203,13 @@ export function GiftSubscriptionExample() {
             </p>
 
             <div className="example-note">
-                The selected date is the deadline for redeeming the voucher, not the end of the gifted
-                subscription. The subscription duration starts when the recipient activates the code and is
-                determined by the selected monetization.
+                The selected date is the deadline for redeeming the voucher, not the end of the gifted subscription. The subscription duration starts when the
+                recipient activates the code and is determined by the selected monetization.
             </div>
 
             <div className="example-note">
-                To gift access to a series, switch to the series TivioPro application first. The example then
-                lists giftable subscriptions from that application. The voucher grants everything covered by
-                the selected subscription, so the series should use its own subscription monetization.
+                To gift access to a series, switch to the series TivioPro application first. The example then lists giftable subscriptions from that
+                application. The voucher grants everything covered by the selected subscription, so the series should use its own subscription monetization.
             </div>
 
             <form
@@ -176,14 +227,17 @@ export function GiftSubscriptionExample() {
                         value={inputHandle}
                     />
                 </label>
-                <button disabled={switchingApplication || !inputHandle.trim()} type="submit">
+                <button
+                    disabled={loading || switchingApplication || !inputHandle.trim()}
+                    type="submit"
+                >
                     {switchingApplication ? 'Switching…' : 'Load giftable subscriptions'}
                 </button>
             </form>
 
             {activeHandle && (
                 <p>
-                    Active application: <code>{activeHandle}</code>
+                    Active application: <code>{activeHandle}</code> (organization: <code>{activeOrganizationId}</code>)
                 </p>
             )}
 
@@ -207,7 +261,10 @@ export function GiftSubscriptionExample() {
                     >
                         <option value="">— select subscription —</option>
                         {giftSubscriptions.map((subscription) => (
-                            <option key={subscription.id} value={subscription.id}>
+                            <option
+                                key={subscription.id}
+                                value={subscription.id}
+                            >
                                 {resolveTranslation(subscription.name, subscription.id)} ({subscription.id})
                             </option>
                         ))}
@@ -225,9 +282,10 @@ export function GiftSubscriptionExample() {
                 </label>
             </div>
 
-            {giftSubscriptions.length === 0 && (
+            {activeHandle && !switchingApplication && giftSubscriptions.length === 0 && (
                 <p className="example-error">
-                    No subscription has <code>isPurchasableAsVoucher</code> enabled in Tivio Studio.
+                    No enabled giftable subscription was found for this application. Check its monetizations and <code>isPurchasableAsVoucher</code> setting in
+                    Tivio Studio.
                 </p>
             )}
 
@@ -266,7 +324,10 @@ export function GiftSubscriptionExample() {
                     >
                         Open checkout in new tab
                     </a>
-                    <button type="button" onClick={() => setShowIframe((current) => !current)}>
+                    <button
+                        type="button"
+                        onClick={() => setShowIframe((current) => !current)}
+                    >
                         {showIframe ? 'Close checkout iframe' : 'Open checkout in iframe'}
                     </button>
                 </div>
@@ -276,7 +337,12 @@ export function GiftSubscriptionExample() {
                 <div className="qerko-checkout-shell">
                     <div className="qerko-checkout-header">
                         <strong>Qerko checkout</strong>
-                        <button type="button" onClick={() => setShowIframe(false)}>Close</button>
+                        <button
+                            type="button"
+                            onClick={() => setShowIframe(false)}
+                        >
+                            Close
+                        </button>
                     </div>
                     <iframe
                         className="qerko-checkout-frame"
@@ -293,21 +359,23 @@ export function GiftSubscriptionExample() {
                     <p>Send this single-use voucher code to the recipient:</p>
                     <code>{voucherCode}</code>
                     <div className="example-actions">
-                        <button type="button" onClick={() => void copyVoucherCode()}>
+                        <button
+                            type="button"
+                            onClick={() => void copyVoucherCode()}
+                        >
                             {copied ? 'Copied' : 'Copy voucher code'}
                         </button>
-                        <a className="example-link-button" href="?example=voucher">
+                        <a
+                            className="example-link-button"
+                            href="?example=voucher"
+                        >
                             Open recipient activation example
                         </a>
                     </div>
                 </div>
             )}
 
-            {isPaid && !voucherCode && (
-                <p className="example-note">
-                    Payment is PAID. Waiting for Tivio to attach the generated voucher code to the purchase…
-                </p>
-            )}
+            {isPaid && !voucherCode && <p className="example-note">Payment is PAID. Waiting for Tivio to attach the generated voucher code to the purchase…</p>}
 
             {paymentInfo && <pre>{JSON.stringify(paymentInfo, null, 2)}</pre>}
         </div>
