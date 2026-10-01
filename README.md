@@ -52,10 +52,30 @@ a valid `TASTING` shows the paywall before playback.
 Open a specific example directly with the `example` query parameter, for example
 [`?example=qerko-checkout`](http://localhost:5173/?example=qerko-checkout).
 
-The Qerko example opens the returned hosted checkout URL in a new tab as the
-supported integration. It also includes an explicitly experimental iframe mode
-for validating Qerko checkout, wallet and 3DS behavior before using it in
-production.
+The Qerko example creates an order with a Qerko `webTheme` UUID and opens the
+returned `webPaymentGatewayLink` in an iframe. The optional checkout options are
+the sixth argument of `purchaseSubscriptionWithQerko` (after `quantity` and
+`gateway`). The bundle must advertise `supportsQerkoWebTheme`; older bundles
+are rejected before creating an order.
+
+The frame uses `allow="payment *"` without a sandbox. `challengeWindowSize=01`
+is added to the returned URL for 3DS. The example observes the matching
+`purchaseId` in the user's purchases and closes the frame on `PAID` or a failed
+terminal status. Closing the frame manually does not cancel the order.
+Return URLs are navigation destinations, not proof of payment. The result comes
+from Qerko's webhook to Tivio. Card, wallet, and bank 3DS behavior must be tested
+on the deployment domain before production use.
+
+To test a locally built remote bundle, add this to `.env.development.local`:
+
+```dotenv
+VITE_TIVIO_BUNDLE_URL=/__tivio-local-bundle.js
+TIVIO_LOCAL_BUNDLE_PATH=/absolute/path/to/core-react-dom/dist/index.js
+```
+
+This file is ignored by Git. The dev server serves only the configured bundle;
+it is not included in production builds. Remove these settings to use the remote
+bundle configured for your SDK secret.
 
 ## Scripts
 
